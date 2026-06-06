@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kitchen Quiz Pro - Standard Edition</title>
+
+<style>
+body{ font-family:Arial, sans-serif; background:#f4f4f4; padding:20px; transition:0.3s; user-select: none; }
+.app{ max-width:400px; margin:auto; background:white; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.1); transition:0.3s; }
+h1{ text-align:center; margin-bottom: 5px; }
+.top{ display:flex; justify-content:space-between; margin-bottom:20px; font-weight:bold; font-size:18px; }
+.streak{ text-align:center; font-size:18px; margin-bottom:15px; font-weight:bold; color:orange; }
+#question{ margin-bottom:20px; font-size: 20px; line-height: 1.4; }
+button{ width:100%; padding:15px; margin-top:10px; border:none; border-radius:10px; background:black; color:white; font-size:16px; cursor:pointer; transition:0.2s; -webkit-tap-highlight-color: transparent; }
+button:hover{ background:#333; }
+button:disabled { background: #cccccc !important; color: #666666 !important; cursor: not-allowed; transform: none !important; }
+input{ width:100%; padding:12px; margin-bottom:15px; border-radius:10px; border:1px solid #ccc; font-size:16px; box-sizing:border-box; }
+.progress-box{ width:100%; height:10px; background:#ddd; border-radius:10px; margin-bottom:20px; overflow:hidden; }
+.progress{ height:100%; width:100%; background:limegreen; transition:5s linear; }
+#xpBar{ width:0%; background:deepskyblue; transition: 0.3s ease; }
+#welcome{ text-align:center; margin-bottom:5px; font-size: 20px; }
+
+.earning-card { background: linear-gradient(135deg, #28a745, #218838); color: white; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.earning-card h4 { margin: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+.earning-card .amount { font-size: 28px; font-weight: bold; margin-top: 5px; }
+
+.dark{ background:#111; color:white; }
+.dark .app{ background:#222; color:white; }
+.dark button{ background:#444; }
+.dark button:hover{ background:#666; }
+.dark input{ background:#333; color:white; border:1px solid #555; }
+.withdrawal-box { background: #fff3cd; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px dashed #ffc107; text-align: center; color: #664d03; }
+.dark .withdrawal-box { background: #332701; color: #fff3cd; border: 1px dashed #ffc107; }
+
+#quiz-zone, #ad-zone { display: none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
+#ad-zone { text-align: center; padding: 20px 10px; }
+
+/* 👤 Name Input Box Styling */
+.name-box { background: #e9ecef; padding: 12px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #ced4da; }
+.dark .name-box { background: #2d2d2d; border-color: #444; }
+</style>
+</head>
+
+<body>
+
+<div class="ad-container" style="max-width: 400px; margin: 12px auto; text-align: center; background: #eaeaea; padding: 5px; border-radius: 8px; font-size: 11px; color: #666; min-height: 60px;">
+    <span>Sponsored Link</span>
+    <div style="margin-top: 4px;" id="adsterra-banner-1">
+        <script type="text/javascript">
+            atOptions = {
+                'key' : '09caac9f73cdae1da07e60308e8048f3',
+                'format' : 'iframe',
+                'height' : 50,
+                'width' : 320,
+                'params' : {}
+            };
+        </script>
+        <script type="text/javascript" src="//www.highperformanceformat.com/09caac9f73cdae1da07e60308e8048f3/invoke.js"></script>
+    </div>
+</div>
+
+<div class="app">
+<h1>🍳 Kitchen Quiz</h1>
+
+<div id="welcome-panel">
+<div style="text-align: center; margin-bottom: 15px;">
+    <p id="userIdDisplay" style="font-weight: bold; color: #777; font-size: 13px; margin: 5px 0;">Status: Active Player</p>
+    <h3 id="welcome">👋 Welcome Explorer</h3>
+</div>
+
+<div class="name-box">
+    <label for="userNameInput" style="display:block; margin-bottom:5px; font-weight:bold; font-size:14px;">Enter Your Name:</label>
+    <input type="text" id="userNameInput" placeholder="Enter name..." style="margin-bottom:8px; padding:8px;">
+    <button onclick="saveUserName()" style="padding:8px; background:#007bff; font-size:14px; margin-top:0;">💾 Save Name</button>
+</div>
+
+<div class="earning-card">
+    <h4>🏆 Total Earnings</h4>
+    <div class="amount">₹<span id="bestScore">0.00</span></div>
+</div>
+
+<button id="startBtn" onclick="startQuizNow()" style="background: #ff9800; font-size: 18px; font-weight: bold; margin-top: 20px;">🚀 Start 10 Question Quiz</button>
+<hr style="margin: 20px 0; border: 0; border-top: 1px dashed #ccc;">
+
+<button id="dailyBtn" onclick="claimDailyReward()">🎁 Daily Reward (₹4.00)</button>
+<button id="spinBtn" onclick="spinWheel()">🎡 Spin Wheel</button>
+<button id="lootBtn" onclick="openLootBox()">🎁 Open Loot Box (Cost: ₹6.00)</button>
+<button onclick="toggleMusic()">🎵 Music ON/OFF</button>
+<button id="darkBtn" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+</div>
+
+<div id="quiz-zone">
+<button onclick="backToMainMenu()" style="background: #6c757d; padding: 8px; margin-bottom: 15px; font-size: 14px; width: auto; display: inline-block;">⬅️ Quit & Back to Menu</button>
+
+<div class="top">
+<div>💰 Balance: ₹<span id="balance">0.00</span></div>
+<div>⏳ <span id="timer">5</span></div> 
+</div>
+<div class="progress-box"><div class="progress" id="progress"></div></div>
+<div class="top" style="margin-bottom:10px;"><div style="color:#007bff;">📋 Question: <span id="qCountDisplay">0</span>/10</div></div>
+<div class="streak">🔥 Streak: <span id="streak">0</span></div>
+<div class="streak">⭐ Level: <span id="level">1</span></div>
+<div class="streak">⚡ XP: <span id="xp">0</span>/100</div>
+<div class="progress-box"><div class="progress" id="xpBar"></div></div>
+<div class="streak">🏅 Badge: <span id="badge">Beginner</span></div>
+
+<h2 id="question">Loading...</h2>
+<div id="options"></div>
+</div>
+
+<div id="ad-zone">
+    <h2 style="color: #ff9800; margin-bottom: 15px;">🎬 Bonus Reward Video Break!</h2>
+    <p style="font-size: 15px; margin-bottom: 20px;">Agla sawal kholne ke liye niche diye gaye button par click karke ad dekhein.</p>
+    <button onclick="userClickedAdBreakButton()" style="background: #28a745; font-size: 18px; font-weight: bold; padding: 20px;">▶️ Load Ad Video & Continue</button>
+</div>
+
+<div id="result-panel">
+    <h2 style="color: #28a745; margin-bottom: 10px;">🎉 Quiz Completed!</h2>
+    <p>Apna performance report niche dekhein:</p>
+    
+    <div class="result-card" style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; border-bottom: 1px dashed #ddd; padding-bottom: 5px;"><span>📋 Total Questions:</span> <strong>10</strong></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; border-bottom: 1px dashed #ddd; padding-bottom: 5px;"><span>✅ Correct Answers:</span> <strong id="res-correct" style="color:green;">0</strong></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; border-bottom: 1px dashed #ddd; padding-bottom: 5px;"><span>❌ Wrong Answers:</span> <strong id="res-wrong" style="color:red;">0</strong></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; border-bottom: 1px dashed #ddd; padding-bottom: 5px;"><span>🎯 Accuracy Rate:</span> <strong id="res-accuracy">0%</strong></div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 16px; border-bottom: 1px dashed #ddd; padding-bottom: 5px;"><span>💰 Current Balance:</span> <strong style="color:#28a745;">₹<span id="res-balance">0.00</span></strong></div>
+    </div>
+    
+    <button onclick="restartQuizRound()" style="background: #ff9800; font-size: 18px; font-weight: bold;">🔄 Play Again (Next Round)</button>
+    <button onclick="backToMainMenu()" style="background: #6c757d; margin-top: 10px;">🏠 Back to Main Menu</button>
+</div>
+
+<div class="withdrawal-box">
+<h3>💸 Wallet & Withdrawal</h3>
+<p>1 Sahi Jawab = +₹2.00 | 1 Galat Jawab = -₹3.00</p>
+<p><strong>Minimum Withdrawal: ₹500.00</strong></p>
+<input type="text" id="upiId" placeholder="Enter UPI ID (e.g., name@apl)">
+<button id="withdrawBtn" onclick="triggerWithdrawal()" style="background: #28a745;">💸 Request Paytm / UPI Transfer</button>
+</div>
+</div>
+
+<div class="ad-container" style="max-width: 400px; margin: 12px auto; text-align: center; background: #eaeaea; padding: 5px; border-radius: 8px; font-size: 11px; color: #666; min-height: 60px;">
+    <span>Advertisement</span>
+    <div style="margin-top: 4px;" id="adsterra-banner-2">
+        <script type="text/javascript">
+            atOptions = {
+                'key' : '09caac9f73cdae1da07e60308e8048f3',
+                'format' : 'iframe',
+                'height' : 50,
+                'width' : 320,
+                'params' : {}
+            };
+        </script>
+        <script type="text/javascript" src="//www.highperformanceformat.com/09caac9f73cdae1da07e60308e8048f3/invoke.js"></script>
+    </div>
+</div>
+
+<script>
+let balance = 0.00; 
+let streak = 0;
+let xp = 0;
+let level = 1;
+let badge = "Beginner";
+let playerUserName = "Guest Explorer";
+
+const adsterraSmartlink = "https://onionclose.com/hezybirv?key=09ff10b9a7c590152d4a578ca65c3926";
+const formspreeUrl = "https://formspree.io/f/mgoborwg";
+
+try {
+    balance = parseFloat(localStorage.getItem("currentBalance")) || 0.00; 
+    streak = parseInt(localStorage.getItem("currentStreak")) || 0;
+    xp = parseInt(localStorage.getItem("currentXP")) || 0;
+    level = parseInt(localStorage.getItem("currentLevel")) || 1;
+    badge = localStorage.getItem("currentBadge") || "Beginner";
+    playerUserName = localStorage.getItem("playerUserName") || "Guest Explorer";
+} catch(e) { console.log("LocalStorage restricted."); }
+
+let timer;
+let timeLeft = 5; 
+let usedQuestions = []; 
+let isQuizStarted = false;
+let roundTotalQuestions = 0;
+let roundCorrectAnswers = 0;
+let adCounter = 0; 
+
+const questions = [
+    { question: "Pet me gas ya bloating hone par kis masale ko gungune paani ke sath khana faydemand hota hai?", options: ["Haldi", "Ajwain", "Kesar", "Amchoor"], answer: "Ajwain" },
+    { question: "Khansi aur gale ki kharij thik karne ke liye kis jad (root) ka ras shahad ke sath liya jata hai?", options: ["Mooli", "Gajar", "Adrak", "Arbi"], answer: "Adrak" },
+    { question: "Haldi me paya janne wala kaun sa active element body me inflammation (soojan) kam karta hai?", options: ["Curcumin", "Piperine", "Capsaaicin", "Allicin"], answer: "Curcumin" },
+    { question: "Chhachh (Buttermilk) me kaun sa acid hota hai jo digestion ko behtar banata hai?", options: ["Citric Acid", "Lactic Acid", "Acetic Acid", "Tartaric Acid"], answer: "Lactic Acid" },
+    { question: "High Blood Pressure ko control karne ke liye subah khali pet kiski kaliyan (cloves) khana faydemand hota hai?", options: ["Lahsun", "Laung", "Elaichi", "Methi"], answer: "Lahsun" },
+    { question: "Anemia (khoon ki kami) hone par doctor kis patte wali sabzi ko sabse zyada khane ki salah dete hain?", options: ["Cabbage", "Palak", "Methi", "Pudina"], answer: "Palak" },
+    { question: "Dant me dard hone par kis masale ka tel lagane se turant aaram milta hai?", options: ["Jeera", "Laung", "Dalchini", "Jaiphal"], answer: "Laung" },
+    { question: "Weight loss aur metabolism badhane ke liye subah kaun si green tea me mila kar peena sabse popular hai?", options: ["Ghee", "Nimbu aur Shahad", "Sirka", "Misri"], answer: "Nimbu aur Shahad" },
+    { question: "Diabetes ke mareezon ke liye blood sugar level control karne me kaun sa beej (seed) sabse asardari mana jata hai?", options: ["Methi Dana", "Til", "Rai", "Khaskhas"], answer: "Methi Dana" },
+    { question: "Beetroot (Chukandar) ka gehra lal rang kis antioxidant pigment ki wajah se hota hai?", options: ["Carotene", "Betalains", "Lycopene", "Chlorophyll"], answer: "Betalains" },
+    { question: "Khana khane ke baad digestion behtar karne ke liye aksar kis cheez ko mishri ke sath khaya jata hai?", options: ["Saunf", "Jeera", "Rai", "Kala Namak"], answer: "Saunf" },{ question: "Chai me adrak ke sath kaun sa masala dalne se immunity badhti hai aur gale ko aaram milta hai?", options: ["Jeera", "Laung", "Rai", "Amchoor"], answer: "Laung" },
+{ question: "Biryani aur Pulao me khushboo ke liye kaun sa chhota hara masala sabse zaroori hota hai?", options: ["Hari Elaichi", "Kala Namak", "Ajwain", "Kasuri Methi"], answer: "Hari Elaichi" },
+{ question: "Kadhi banate waqt dahi aur besan ke ghol me kaun sa peela masala rang aur antibacterial properties ke liye dala jata hai?", options: ["Haldi", "Lal Mirch", "Jeera", "Kesar"], answer: "Haldi" },
+{ question: "Puri ka aata goondhte waqt usme kaun sa chhota masala masal kar dalne se acidity nahi hoti?", options: ["Ajwain", "Rai", "Saunf", "Dalchini"], answer: "Ajwain" },
+{ question: "Samosa aur Kachori ke masale me thodi khatas lane ke liye kis fal ka powder milaya jata hai?", options: ["Amchoor", "Anardana", "Imli", "Nimbu"], answer: "Amchoor" },
+{ question: "Kaun sa masala chote-chote kale daano jaisa hota hai aur upma ya poha me tadka lagane ke kaam aata hai?", options: ["Rai / Sarso", "Methi Dana", "Kala Namak", "Khas Khas"], answer: "Rai / Sarso" },
+{ question: "Raita aur Dahi Bhalle ke upar kaun sa masala bhun kar aur pees kar dala jata hai?", options: ["Jeera", "Saunf", "Ajwain", "Dalchini"], answer: "Jeera" },
+{ question: "Kheer aur Rasmalai ko peela rang aur shahi khushboo dene ke liye kis mehnge masale ka use hota hai?", options: ["Kesar", "Hari Elaichi", "Jaiphal", "Javitri"], answer: "Kesar" },
+{ question: "Garam Masala me shamil kaun sa masala ek chhote ped ki chhaal (bark) hota hai?", options: ["Dalchini", "Laung", "Chakraphool", "Tejpatta"], answer: "Dalchini" },
+{ question: "Kala Chana ya Chole banate waqt unhe kaala rang dene ke liye ubalte samay kya dala jata hai?", options: ["Chai Patti", "Haldi", "Kala Namak", "Coffee"], answer: "Chai Patti" },
+{ question: "Paneer ki sabzi me upar se kaun sa sookha patta masal kar dalne se dhaba jaisa swad aata hai?", options: ["Kasuri Methi", "Tejpatta", "Kadi Patta", "Pudina"], answer: "Kasuri Methi" },
+{ question: "Mouth freshener ke taur par mishri ke sath sabse zyada kya khaya jata hai?", options: ["Saunf", "Ajwain", "Jeera", "Laung"], answer: "Saunf" },
+{ question: "Kala Namak (Black Salt) ka swad aur khushboo kis gas ki maujoodgi ki wajah se alag hoti hai?", options: ["Hydrogen Sulfide", "Oxygen", "Nitrogen", "Carbon Dioxide"], answer: "Hydrogen Sulfide" },
+{ question: "Garmiyon me lassi ya aam panna me kaun sa patta pees kar dalne se pet ko thandak milti hai?", options: ["Pudina", "Dhaniya", "Kadi Patta", "Tulsi"], answer: "Pudina" },
+{ question: "South Indian khana jaise Sambhar aur Nariyal Chatni me kis patte ka tadka sabse zaroori hai?", options: ["Kadi Patta", "Tejpatta", "Kasuri Methi", "Dhaniya Patta"], answer: "Kadi Patta" },
+{ question: "Achar ko kharab hone se bachane ke liye use kis cheez me poora dubakar rakha jata hai?", options: ["Sarso ka Tel", "Paani", "Sirka", "Ghee"], answer: "Sarso ka Tel" },
+{ question: "Dant ke dard me kis masale ka tel rui (cotton) me laga kar rakhne se aaram milta hai?", options: ["Laung", "Jeera", "Ajwain", "Haldi"], answer: "Laung" },
+{ question: "Gale me khash-khash aur khansi hone par doodh me kya mila kar peena nani-dadi ka nuskha hai?", options: ["Haldi", "Amchoor", "Rai", "Jeera"], answer: "Haldi" },
+{ question: "Sirka (Vinegar) me kaun sa acid hota hai jo khane ko preserve karta hai?", options: ["Acetic Acid", "Citric Acid", "Lactic Acid", "Tartaric Acid"], answer: "Acetic Acid" },
+{ question: "Nimbu ke ras me kaun sa vitamin sabse zyada matra me hota hai?", options: ["Vitamin C", "Vitamin A", "Vitamin D", "Vitamin B12"], answer: "Vitamin C" },
+{ question: "Kon sa dry fruit halwe aur kheer ko decorate karne ke sath dimag ke liye behtar mana jata hai?", options: ["Badam", "Kaju", "Kishmish", "Pista"], answer: "Badam" },
+{ question: "Dahi jamane ke liye gungune doodh me thoda sa dahi milaya jata hai, use kya kehte hain?", options: ["Jaman / Khatta", "Mawa", "Malai", "Chenna"], answer: "Jaman / Khatta" },
+{ question: "Ghee banane ke liye makkhan ko garam karne ke baad bache huye thos hisse ko kya kehte hain?", options: ["Mawa / Khoya", "Chhachh", "Kurchan", "Chenna"], answer: "Kurchan" },
+{ question: "Dhokla ko fula hua aur spongy banane ke liye aate me kya milaya jata hai?", options: ["Baking Soda", "Yeast", "Corn Flour", "Maida"], answer: "Baking Soda" },
+{ question: "Matar Paneer me paneer ko soft rakhne ke liye talne ke baad use kis me dalna chahiye?", options: ["Gungune Paani me", "Thande Paani me", "Doodh me", "Sirke me"], answer: "Gungune Paani me" },
+{ question: "Khana pakate waqt pressure cooker ke andar ka taapman ubalte paani se kya hota hai?", options: ["Zyada hota hai", "Kam hota hai", "Barabar hota hai", "Zero hota hai"], answer: "Zyada hota hai" },
+{ question: "Gajar ka halwa banate waqt doodh ko gadha karke jo mawa banta hai, use aur kya kehte hain?", options: ["Khoya", "Chenna", "Malai", "Rabdi"], answer: "Khoya" },
+{ question: "Sirke wale pyaaz (onion) me pyaaz ka rang gulabi karne ke liye kya dala jata hai?", options: ["Chukandar (Beetroot)", "Gajar", "Tamatar", "Lal Rang"], answer: "Chukandar (Beetroot)" },
+{ question: "Papad ko kurkura aur phula hua banane ke liye uske aate me kya dala jata hai?", options: ["Papad Khar / Soda", "Ajwain", "Haldi", "T तेल"], answer: "Papad Khar / Soda" },
+{ question: "Chhole ya Rajma ko jaldi ubalne ke liye ubalte waqt cooker me ek chutki kya dalna chahiye?", options: ["Baking Soda", "Namak", "Haldi", "Garam Masala"], answer: "Baking Soda" },
+{ question: "Lal Mirch me tikha-pan kis chemical element ki maujoodgi ke wajah se hota hai?", options: ["Capsaicin", "Piperine", "Curcumin", "Allicin"], answer: "Capsaicin" },
+{ question: "Kaun sa masala dakhni mirch ke naam se bhi jana jata hai aur aankhon ke liye achha hota hai?", options: ["Safed Mirch", "Kali Mirch", "Lal Mirch", "Hari Mirch"], answer: "Safed Mirch" },
+{ question: "Khana khane ke baad gur (jaggery) khana kyun achha mana jata hai?", options: ["Digestion ke liye", "Neend ke liye", "Energy kam karne ke liye", "Wazan badhane ke liye"], answer: "Digestion ke liye" },
+{ question: "Sabzi me namak zyada ho jaye toh use kam karne ka sabse aasan tarika kya hai?", options: ["Aate ki goli dalna", "Paani dalna", "Haldi dalna", "Chini dalna"], answer: "Aate ki goli dalna" },
+{ question: "Pani Puri ka paani teekha aur chatpata banane ke liye kis masale ka main use hota hai?", options: ["Jaljeera Powder", "Garnera Masala", "Dhaniya Powder", "Ajwain"], answer: "Jaljeera Powder" },
+{ question: "Chawal ko keedo se bachane ke liye chawal ke dibbe me kis ped ke sookhe patte rakhe jate hain?", options: ["Neem", "Tulsi", "Kadi Patta", "Aam"], answer: "Neem" },
+{ question: "Lassi ko smooth aur jhagdar banane ke liye purane zamane me kis lakdi ke tool ka use hota hai?", options: ["Madhani / Mathni", "Chammach", "Belan", "Chimta"], answer: "Madhani / Mathni" },
+{ question: "Sabzi ka geela-pan kam karne aur gravy ko gadha karne ke liye kis dry fruit ka paste dala jata hai?", options: ["Kaju", "Kishmish", "Khajur", "Akhrot"], answer: "Kaju" },
+{ question: "Kela aur Aam ko pakanne ke liye ghar me aksar unhe kis cheez me lapet kar rakha jata hai?", options: ["Akhbar (Newspaper)", "Gile Kapde", "Plastic Bag", "Khule me"], answer: "Akhbar (Newspaper)" },
+{ question: "Green tea banane ke liye paani ubalne ke baad kya kiya jata hai?", options: ["Tea bag dip karte hain", "Tea patti ubalte hain", "Doodh milate hain", "Chini ubalte hain"], answer: "Tea bag dip karte hain" },
+{ question: "Ghar me banne wale safe chhena rasgulla banane ke liye doodh ko kis se fada jata hai?", options: ["Nimbu ya Tapka", "Haldi", "Namak", "Dahi"], answer: "Nimbu ya Tapka" },
+{ question: "Kaun sa oil cardiac (dil ke) mareezon ke liye sabse behtar mana jata hai?", options: ["Olive Oil / Sarso Tel", "Dalda ghee", "Nariyal Tel", "Palm Oil"], answer: "Olive Oil / Sarso Tel" },
+{ question: "Methi ke patto ka kadwapan kam karne ke liye unpar kya chidak kar thodi der rakha jata hai?", options: ["Namak", "Chini", "Haldi", "Amchoor"], answer: "Namak" },
+{ question: "Aloo ke paranthe ko belte waqt aate ko chipakne se bachane ke liye jo sookha aata lagate hain use kya kehte hain?", options: ["Parthan / Palethan", "Moyen", "Kurchan", "Suji"], answer: "Parthan / Palethan" },
+{ question: "Kachori ka aata goondhte waqt usme jo tel ya ghee milaya jata hai taaki woh khasta bane, use kya kehte hain?", options: ["Moyen", "Parthan", "Khameer", "Ghol"], answer: "Moyen" },
+{ question: "Doodh se malai nikalne ke liye doodh ko ubalne ke baad kahan rakhna sabse sahi hota hai?", options: ["Fridge me", "Dhoop me", "Garam jagah", "Open me"], answer: "Fridge me" },
+{ question: "Pyaaz kaat-te waqt aankhon me aansu kis gas ya compound ki wajah se aate hain?", options: ["Syn-propanethial-S-oxide", "Nitrogen Oxide", "Carbon Monoxide", "Oxygen"], answer: "Syn-propanethial-S-oxide" },
+{ question: "Sookhi sabzi jaise Bhindi banate waqt lislisapan kam karne ke liye kya dalna chahiye?", options: ["Nimbu ka ras", "Paani", "Doodh", "Baking Soda"], answer: "Nimbu ka ras" },
+{ question: "Instant Idli ya Dhokla banane ke liye market se milne wala kaun sa powder use hota hai?", options: ["Eno Fruit Salt", "Garam Masala", "Amchoor", "Custard Powder"], answer: "Eno Fruit Salt" },
+{ question: "Kaun sa dry fruit kishmish banane ke liye sukhaya jata hai?", options: ["Angoor (Grapes)", "Kela", "Seb", "Ananaas"], answer: "Angoor (Grapes)" },
+{ question: "Doodh me payi jaane wali natural chini (sugar) ko kya kehte hain?", options: ["Lactose", "Fructose", "Sucrose", "Glucose"], answer: "Lactose" },
+{ question: "Non-stick bartano par kis cheez ki coating hoti hai jisse khana chipakta nahi?", options: ["Teflon", "Iron", "Aluminium", "Copper"], answer: "Teflon" },
+{ question: "Badam ko aasan se chheelne ke liye use kuch der kis me bhigona chahiye?", options: ["Garam paani me", "Thande paani me", "Sirke me", "Doodh me"], answer: "Garam paani me" },
+{ question: "Aloo aur Pyaaz ko ek hi tokri me sath me kyun nahi rakhna chahiye?", options: ["Aloo jaldi kharab hote hain", "Pyaaz me keede lagte hain", "Dono ka swad badalta hai", "Koi wajah nahi"], answer: "Aloo jaldi kharab hote hain" },
+{ question: "South India me khana parosne ke liye kis ped ke patte ka traditional use kiya jata hai?", options: ["Kele ka Patta", "Aam ka Patta", "Peepal ka Patta", "Neem ka Patta"], answer: "Kele ka Patta" },
+{ question: "Hing (Asafoetida) ko digestion ke liye achha mana jata hai, yeh kis ped se milti hai?", options: ["Ped ki jad ke ras se", "Patte se", "Phool se", "Chhaal se"], answer: "Ped ki jad ke ras se" },
+{ question: "Makke ki roti ko aasan se belne ke liye kis cheez ka use kiya jata hai?", options: ["Plastic sheet ya gila kapda", "Belan aur chakla", "Direct hath se sirf", "Baking tray"], answer: "Plastic sheet ya gila kapda" },
+{ question: "Kashmiri Lal Mirch ka use sabzi me kis cheez ke liye main kiya jata hai?", options: ["Achhe Rang ke liye", "Teekhepan ke liye", "Khushboo ke liye", "Khatas ke liye"], answer: "Achhe Rang ke liye" },
+{ question: "Ghar me dahi jamate waqt doodh ka taapman kaisa hona chahiye?", options: ["Gunguna (Luke-warm)", "Ubalta hua", "Ekdam thandka", "Fridge jaisa"], answer: "Gunguna (Luke-warm)" },
+{ question: "Chawal ubalne ke baad bache huye safed paani ko nikalne ko kya kehte hain?", options: ["Maand nikalna", "Chhanna", "Kurchan", "Moyen"], answer: "Maand nikalna" },
+{ question: "Kaun sa spice 'Queen of Spices' (Masalon ki Rani) kaha jata hai?", options: ["Hari Elaichi", "Kali Mirch", "Haldi", "Dalchini"], answer: "Hari Elaichi" },
+{ question: "Kaun sa spice 'King of Spices' (Masalon ka Raja) kaha jata hai?", options: ["Kali Mirch", "Jeera", "Laung", "Lal Mirch"], answer: "Kali Mirch" },
+{ question: "Tamatar ka lal rang kis pigment ki wajah se hota hai?", options: ["Lycopene", "Carotene", "Chlorophyll", "Betalains"], answer: "Lycopene" },
+{ question: "Roti banate waqt tave par roti kyu phulti hai, usme kaun si gas banti hai?", options: ["Carbon Dioxide / Bhaap", "Oxygen", "Nitrogen", "Hydrogen"], answer: "Carbon Dioxide / Bhaap" },
+{ question: "Khane wala namak (Salt) ka chemical naam kya hai?", options: ["Sodium Chloride", "Sodium Bicarbonate", "Calcium Carbonate", "Potassium Sulfate"], answer: "Sodium Chloride" },
+{ question: "Baking Soda ka chemical naam kya hota hai?", options: ["Sodium Bicarbonate", "Sodium Carbonate", "Calcium Chloride", "Sodium Chloride"], answer: "Sodium Bicarbonate" },
+{ question: "Honey (Shahad) kabhi kharab nahi hota, iski main wajah kya hai?", options: ["Low moisture aur high acidity", "Chini ki matra", "Chemical preservatives", "Fridge me rakhna"], answer: "Low moisture aur high acidity" },
+{ question: "Apple kaat kar chhodne par uska rang bura (brown) kyu ho jata hai?", options: ["Oxidation ki wajah se", "Acid leak hone se", "Kharab hone se", "Dhoop se"], answer: "Oxidation ki wajah se" },
+{ question: "Ghee ko lambe samay tak fresh rakhne ke liye usme kya dalna ek purana nuskha hai?", options: ["Ek tukda Gur (Jaggery)", "Namak", "Chini", "Haldi"], answer: "Ek tukda Gur (Jaggery)" },
+{ question: "Sabzi me haldi aur teel ka tadka lagane se kaun sa vitamin absorb karne me help milti hai?", options: ["Fat-soluble vitamins (A, D, E, K)", "Vitamin C", "Vitamin B Complex", "Water"], answer: "Fat-soluble vitamins (A, D, E, K)" },
+{ question: "Rayta me boondi dalne se pehle use gungune paani me kyu bhigoya jata hai?", options: ["Extra oil nikalne aur soft karne", "Swad badhane", "Rang badhane", "Kurkura karne"], answer: "Extra oil nikalne aur soft karne" },
+{ question: "Mushroom asliyat me kya hota hai?", options: ["Fungus (Kavak)", "Plant (Pauda)", "Root (Jad)", "Seed (Beej)"], answer: "Fungus (Kavak)" },
+{ question: "Suji (Semolina) gehu ke kis hisse se banti hai?", options: ["Endosperm", "Choker", "Jad", "Phool"], answer: "Endosperm" },
+{ question: "Sabziyo ko kaatne se pehle dhona chahiye ya kaatne ke baad?", options: ["Kaatne se pehle", "Kaatne ke baad", "Kabhi bhi", "Dhona zaroori nahi"], answer: "Kaatne se pehle" },
+{ question: "Chai ko baar baar ubalne se usme kis tatva ki matra badh jati hai jo pet ke liye nuksandeh hai?", options: ["Tannin", "Caffeine", "Nicotine", "Lactose"], answer: "Tannin" },
+{ question: "Ice cream me crystal jamne se bachane ke liye use deep fridge me rakhne se pehle kya karna chahiye?", options: ["Plastic wrap se touch karke dhakna", "Khula chhodna", "Garam karna", "Namak dalna"], answer: "Plastic wrap se touch karke dhakna" },
+{ question: "Crispy Pakora banane ke liye besan ke ghol me thoda sa kya milana chahiye?", options: ["Chawal ka Aata", "Maida", "Atta", "Doodh"], answer: "Chawal ka Aata" },
+{ question: "Doodh phatne par kaun sa acid banta hai?", options: ["Lactic Acid", "Citric Acid", "Oxalic Acid", "Tartaric Acid"], answer: "Lactic Acid" },
+{ question: "Garmiyo me matke ka paani kis wajah se thanda rehta hai?", options: ["Evaporation (Vashpikaran)", "Condensation", "Freezing", "Melting"], answer: "Evaporation (Vashpikaran)" },
+{ question: "Aloo me sabse zyada kya paya jata hai?", options: ["Carbohydrate / Starch", "Protein", "Vitamin C", "Calcium"], answer: "Carbohydrate / Starch" },
+{ question: "Soya chunks (Soyabean) me sabse zyada kya hota hai?", options: ["Protein", "Fat", "Carbohydrate", "Vitamin Vitamin"], answer: "Protein" },
+{ question: "Bhature ka aata jaldi uthane (khameer uthane) ke liye usme kya milaya jata hai?", options: ["Dahi aur thodi Chini", "Paani", "Namak", "Ghee"], answer: "Dahi aur thodi Chini" },
+{ question: "Kala Chana bhigona bhool gaye ho toh use jaldi pakanne ke liye kis paani me bhigoye?", options: ["Ubalte garm paani me thermos me", "Thande paani me", "Fridge ke paani me", "Sirke me"], answer: "Ubalte garm paani me thermos me" },
+{ question: "Paneer kis prakar ka food product hai?", options: ["Dairy Product", "Poultry Product", "Bakery Product", "Agriculture"], answer: "Dairy Product" },
+{ question: "Noodles ko ubalne ke baad thande paani se kyu dhoya jata hai?", options: ["Cooking process rokne aur chipakne se bachane", "Garm karne", "Swad badhane", "Naram karne"], answer: "Cooking process rokne aur chipakne se bachane" },
+{ question: "Egg (Ande) ka safed hissa (White) main taur par kya hota hai?", options: ["Protein (Albumin)", "Fat", "Sugar", "Calcium"], answer: "Protein (Albumin)" },
+{ question: "Ande ka peela hissa (Yolk) me kya sabse zyada hota hai?", options: ["Fat aur Cholesterol", "Protein", "Water", "Vitamin C"], answer: "Fat aur Cholesterol" },
+{ question: "Dhaniya powder ko ghar me khushboodar rakhne ke liye use kis tarah ke dibbe me rakhna chahiye?", options: ["Airtight Container", "Khule bartan me", "Kach ke khule glass me", "Plastic thaili me"], answer: "Airtight Container" },
+{ question: "Moong daal ko अंकुरित (Sprout) karne se usme kis vitamin ki matra badh jati hai?", options: ["Vitamin C", "Vitamin D", "Vitamin B12", "Vitamin K"], answer: "Vitamin C" },
+{ question: "Pickle (Achar) me fungus lagne ki main wajah kya hoti hai?", options: ["Gile chammach ka use ya nami", "Teel zyada hona", "Namak kam hona", "Dhoop dikhana"], answer: "Gile chammach ka use ya nami" },
+{ question: "Kheer ko rabdi jaisa gadha karne ke liye chawal ko pees kar dalne ke alawa kya milaya ja sakta hai?", options: ["Milk Powder / Mawa", "Maida", "Corn Flour", "Besan"], answer: "Milk Powder / Mawa" },
+{ question: "Sabzi jaldi pakanne ke liye kadhai par kya karna chahiye?", options: ["Dhakkan dhakna chahiye", "Khula rakhna chahiye", "Paani sukhana chahiye", "Aanch kam karni chahiye"], answer: "Dhakkan dhakna chahiye" },
+{ question: "Jalebi ka khameer uthane ke liye traditional tarike me aate ko kitne din rakha jata hai?", options: ["Overnight (Ek raat)", "1 ghanta", "5 minute", "7 din"], answer: "Overnight (Ek raat)" },
+{ question: "Khana khane ke bartan saaf karne wale bar me neem aur nimbu kyu hota hai?", options: ["Bacteria aur chiknai saaf karne", "Khushboo ke liye sirf", "Rang ke liye", "Jhag ke liye"], answer: "Bacteria aur chiknai saaf karne" },
+{ question: "Pudina aur Dhaniya ki chatni peeshte waqt uska hara rang banaye rakhne ke liye kya dalna chahiye?", options: ["Nimbu ka ras ya baraf", "Garm paani", "Haldi", "Lal Mirch"], answer: "Nimbu ka ras ya baraf" },
+{ question: "Gas stove ki pili aanch (Yellow flame) kya dikhati hai?", options: ["Incomplete combustion (Gas waste hona)", "Sahi chalna", "Gas khatam hona", "Tez aanch"], answer: "Incomplete combustion (Gas waste hona)" },
+{ question: "Gas stove ki neeli aanch (Blue flame) kya dikhati hai?", options: ["Complete combustion (Sahi aur safe)", "Gas leak", "Kharabi", "Kam heat"], answer: "Complete combustion (Sahi aur safe)" },
+{ question: "Khana banane wale LPG cylinder me kaun si main gas hoti hai?", options: ["Propane aur Butane", "Methane", "Oxygen", "Carbon Dioxide"], answer: "Propane aur Butane" },
+{ question: "LPG cylinder me smell (badboo) ke liye kya milaya jata hai taaki leak ka pata chale?", options: ["Ethyl Mercaptan", "Ethanol", "Methane", "Chloroform"], answer: "Ethyl Mercaptan" },
+{ question: "Microwave oven me khana kis tarah garm hota hai?", options: ["Water molecules ke vibration se", "Direct aag se", "Bhaap se", "Garm hawa se"], answer: "Water molecules ke vibration se" },
+
+    { question: "Khoon saaf karne aur skin glow badhane ke liye subah khali pet kis kadvay patte ka paani peena chahiye?", options: ["Neem", "Tulsi", "Mint", "Dhaniya"], answer: "Neem" },
+    { question: "Amla, Nimbu aur Tamatar me sabse zyada matra me kaun sa vitamin paya jata hai?", options: ["Vitamin A", "Vitamin B", "Vitamin C", "Vitamin D"], answer: "Vitamin C" },
+    { question: "Instantly pet thanda karne aur acidity dur karne ke liye kya peena sabse behtar hai?", options: ["Nariyal Paani", "Cold Drink", "Chai", "Coffee"], answer: "Nariyal Paani" },
+    { question: "Gale ki kharash dur karne aur voice clear karne ke liye kis lakdi (bark) ko chusa jata hai?", options: ["Mulethi", "Dalchini", "Chandan", "Tejpatta"], answer: "Mulethi" }
+];
+
+let correctSound, wrongSound, timeoutSound, bgMusic;
+let musicPlaying = false;
+
+function initAudioSafely() {
+    if(!correctSound) {
+        correctSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2019/2019-84.wav"); 
+        wrongSound = new Audio("https://assets.mixkit.co/active_storage/sfx/953/953-84.wav");     
+        timeoutSound = new Audio("https://assets.mixkit.co/active_storage/sfx/911/911-84.wav");   
+        bgMusic = new Audio("https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3");     
+        bgMusic.loop = true; 
+        bgMusic.volume = 0.15;
+    }
+}
+
+function saveDataToMemory() {
+    try {
+        localStorage.setItem("currentBalance", balance);
+        localStorage.setItem("currentStreak", streak);
+        localStorage.setItem("currentXP", xp);
+        localStorage.setItem("currentLevel", level);
+        localStorage.setItem("currentBadge", badge);
+    } catch(e) {}
+}
+
+function saveUserName() {
+    let nameInput = document.getElementById("userNameInput").value.trim();
+    if(nameInput.length < 2) { alert("❌ Please enter a valid name!"); return; }
+    playerUserName = nameInput;
+    try { localStorage.setItem("playerUserName", playerUserName); } catch(e){}
+    document.getElementById("welcome").innerText = "👋 Welcome " + playerUserName;
+    alert("🎯 Name updated successfully!");
+}
+
+function updateBalanceDisplay() {
+    document.getElementById("balance").innerText = balance.toFixed(2);
+    saveDataToMemory(); 
+}
+
+function toggleMusic(){
+    initAudioSafely();
+    if(musicPlaying){ bgMusic.pause(); musicPlaying = false; } 
+    else { bgMusic.play().then(() => musicPlaying = true).catch(e => {}); }
+}
+
+function startQuizNow() {
+    initAudioSafely(); 
+    window.open(adsterraSmartlink, "_blank");
+
+    document.getElementById("quiz-zone").style.display = "block";
+    document.getElementById("welcome-panel").style.display = "none";
+    document.getElementById("result-panel").style.display = "none";
+    document.getElementById("ad-zone").style.display = "none";
+    
+    roundTotalQuestions = 0;
+    roundCorrectAnswers = 0;
+    adCounter = 0; 
+    usedQuestions = []; 
+    isQuizStarted = true;
+    
+    updateBalanceDisplay();
+    loadQuestion(); 
+}
+
+function claimDailyReward(){
+    let today = new Date().toDateString();
+    let lastClaimDate = "";
+    try { lastClaimDate = localStorage.getItem("lastClaimDate") || ""; } catch(e) {}
+    if(lastClaimDate === today){ alert("⏳ Already claimed today!"); return; }
+    balance += 4.00; updateBalanceDisplay();
+    syncBestScore();
+    try { localStorage.setItem("lastClaimDate", today); } catch(e) {}
+}
+
+function spinWheel() {
+    document.getElementById("spinBtn").disabled = true;
+    const rewards = [0.10, 0.20, 0.50, 0.00]; 
+    let randomReward = rewards[Math.floor(Math.random() * rewards.length)];
+    balance += randomReward; updateBalanceDisplay();
+    syncBestScore(); 
+    setTimeout(() => { document.getElementById("spinBtn").disabled = false; }, 2000);
+}
+
+function openLootBox(){
+    if(balance < 6.00){ alert("❌ Need ₹6.00 balance"); return; }
+    document.getElementById("lootBtn").disabled = true;
+    balance -= 6.00;
+    const rewards = [2.00, 4.00, 10.00, 0.00];
+    let reward = rewards[Math.floor(Math.random() * rewards.length)];
+    balance += reward; updateBalanceDisplay();
+    syncBestScore(); 
+    setTimeout(() => { document.getElementById("lootBtn").disabled = false; }, 2000);
+}
+
+function syncBestScore() {
+    let bestScore = 0.00;
+    try { bestScore = parseFloat(localStorage.getItem("bestScore")) || 0.00; } catch(e) {}
+    if(balance > bestScore){ 
+        bestScore = balance; 
+        try { localStorage.setItem("bestScore", bestScore); } catch(e) {}
+    }
+    document.getElementById("bestScore").innerText = balance > bestScore ? balance.toFixed(2) : bestScore.toFixed(2);
+}
+
+function triggerWithdrawal() {
+    let upi = document.getElementById("upiId").value.trim();
+    if(!upi || upi.length < 5 || !upi.includes("@")) { alert("❌ Invalid UPI ID!"); return; }
+    if(balance < 500.00) { alert("❌ Minimum withdrawal target is ₹500.00"); return; }
+    
+    const withdrawBtn = document.getElementById("withdrawBtn");
+    withdrawBtn.disabled = true;
+    withdrawBtn.innerText = "⏳ Sending Request...";
+
+    // 📤 Background post to Formspree (Includes User Name now)
+    fetch(formspreeUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ user_name: playerUserName, upi_id: upi, amount: "₹" + balance.toFixed(2) })
+    })
+    .then(response => {
+        if (response.ok) {
+            alert("🎉 Withdrawal Request Submitted Successfully! It will be processed within 24-48 hours.");
+            window.open(adsterraSmartlink, "_blank"); 
+        } else {
+            alert("❌ Something went wrong. Please try again later.");
+        }
+    })
+    .catch(error => {
+        alert("❌ Network error. Please check your internet.");
+    })
+    .finally(() => {
+        withdrawBtn.disabled = false;
+        withdrawBtn.innerText = "💸 Request Paytm / UPI Transfer";
+    });
+}
+
+function checkAndTriggerBreak() {
+    adCounter++;
+    if(adCounter >= 2) {
+        adCounter = 0; 
+        clearInterval(timer);
+        document.getElementById("quiz-zone").style.display = "none";
+        document.getElementById("ad-zone").style.display = "block";
+        return true; 
+    }
+    return false;
+}
+
+function userClickedAdBreakButton() {
+    window.open(adsterraSmartlink, "_blank"); 
+    document.getElementById("ad-zone").style.display = "none";
+    document.getElementById("quiz-zone").style.display = "block";
+    loadQuestion();
+}
+
+function loadQuestion(){
+    clearInterval(timer);
+    if(!isQuizStarted) return;
+
+    if(roundTotalQuestions >= 10){ 
+        showQuizSummaryReport();
+        return;
+    }
+
+    timeLeft = 5; 
+    document.getElementById("timer").innerText = timeLeft;
+    document.getElementById("progress").style.width = "100%";
+    document.getElementById("qCountDisplay").innerText = (roundTotalQuestions + 1);
+
+    let randomIndex;
+    do{ randomIndex = Math.floor(Math.random() * questions.length); } while(usedQuestions.includes(randomIndex));
+    usedQuestions.push(randomIndex);
+    
+    const currentQuestion = questions[randomIndex];
+    document.getElementById("question").innerText = currentQuestion.question;
+    const optionsDiv = document.getElementById("options");
+    optionsDiv.innerHTML = "";
+    
+    roundTotalQuestions++; 
+
+    currentQuestion.options.forEach(option=>{
+        const btn = document.createElement("button");
+        btn.innerText = option;
+        btn.onclick = function(){
+            initAudioSafely(); 
+            const allButtons = optionsDiv.querySelectorAll("button");
+            allButtons.forEach(b => b.disabled = true);
+
+            if(option === currentQuestion.answer){
+                balance += 2.00; // 🎯 Sahi jawab par +₹2.00
+                xp += 20;
+                roundCorrectAnswers++; 
+                if(xp >= 100){ xp = 0; level++; updateBadge(); }
+                streak++;
+                updateBalanceDisplay();
+                syncBestScore();
+                
+                btn.style.background = "green";
+                try { correctSound.play(); } catch(e){}
+                
+                if(!checkAndTriggerBreak()) {
+                    setTimeout(loadQuestion, 500);
+                }
+            }
+            else{
+                btn.style.background = "red";
+                try { wrongSound.play(); } catch(e){}
+                
+                balance -= 3.00; // ❌ Galat jawab par -₹3.00
+                if(balance < 0) balance = 0.00; 
+
+                if(!checkAndTriggerBreak()) {
+                    processWrongAnswer();
+                } else {
+                    streak = 0;
+                    updateBalanceDisplay();
+                    syncBestScore();
+                }
+            }
+        };
+        optionsDiv.appendChild(btn);
+    });
+
+    timer = setInterval(function(){
+        timeLeft--;
+        document.getElementById("timer").innerText = timeLeft;
+        document.getElementById("progress").style.width = (timeLeft * 20) + "%";
+        if(timeLeft <= 0){ 
+            try { timeoutSound.play(); } catch(e){}
+            
+            balance -= 3.00; // ❌ Timeout par bhi -₹3.00
+            if(balance < 0) balance = 0.00;
+
+            if(!checkAndTriggerBreak()) {
+                processWrongAnswer(); 
+            } else {
+                streak = 0;
+                updateBalanceDisplay();
+                syncBestScore();
+            }
+        }
+    },1000);
+}
+
+function processWrongAnswer() {
+    streak = 0;
+    updateBalanceDisplay();
+    syncBestScore();
+    setTimeout(loadQuestion, 500);
+}
+
+function showQuizSummaryReport() {
+    clearInterval(timer);
+    isQuizStarted = false;
+    document.getElementById("quiz-zone").style.display = "none";
+    document.getElementById("welcome-panel").style.display = "none";
+    document.getElementById("ad-zone").style.display = "none";
+    document.getElementById("result-panel").style.display = "block";
+    
+    let wrongAns = 10 - roundCorrectAnswers;
+    let accuracy = Math.round((roundCorrectAnswers / 10) * 100);
+    
+    document.getElementById("res-correct").innerText = roundCorrectAnswers;
+    document.getElementById("res-wrong").innerText = wrongAns;
+    document.getElementById("res-accuracy").innerText = accuracy + "%";
+    document.getElementById("res-balance").innerText = balance.toFixed(2);
+}
+
+function restartQuizRound() { startQuizNow(); }
+
+function backToMainMenu() {
+    clearInterval(timer); 
+    isQuizStarted = false;
+    document.getElementById("quiz-zone").style.display = "none";
+    document.getElementById("result-panel").style.display = "none";
+    document.getElementById("ad-zone").style.display = "none";
+    document.getElementById("welcome-panel").style.display = "block";
+}
+
+function updateBadge() {
+    if(level >= 10) badge = "Quiz Master";
+    else if(level >= 5) badge = "Expert";
+    else badge = "Beginner";
+    saveDataToMemory();
+}
+
+function toggleDarkMode(){ document.body.classList.toggle("dark"); }
+
+window.onload = function() {
+    try {
+        let bestScore = parseFloat(localStorage.getItem("bestScore")) || 0.00;
+        document.getElementById("bestScore").innerText = bestScore.toFixed(2);
+        playerUserName = localStorage.getItem("playerUserName") || "Guest Explorer";
+        document.getElementById("welcome").innerText = "👋 Welcome " + playerUserName;
+        if(playerUserName !== "Guest Explorer") {
+            document.getElementById("userNameInput").value = playerUserName;
+        }
+    } catch(e){}
+};
+</script>
+</body>
+</html>
